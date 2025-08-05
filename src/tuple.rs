@@ -1,12 +1,12 @@
 macro_rules! impl_tuple {
     ($($name: ident: $type: ident),+ $(,)?) => {
-        impl<$($type: $crate::IntoOwned),*> $crate::IntoOwned for ($($type,)*) {
-            type Owned = ($($type::Owned,)*);
+        impl<$($type: $crate::IntoOwned),+> $crate::IntoOwned for ($($type,)+) {
+            type Owned = ($($type::Owned,)+);
 
             fn into_owned(self) -> Self::Owned {
-                let ($($name,)*) = self;
+                let ($($name,)+) = self;
 
-                ($($name.into_owned(),)*)
+                ($($name.into_owned(),)+)
             }
         }
     }
