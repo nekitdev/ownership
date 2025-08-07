@@ -3,6 +3,7 @@ name = "ownership"
 version = "0.1.1"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
+rust-version = "1.89"
 description = "Obtaining ownership."
 documentation = "https://docs.rs/ownership"
 readme = "README.md"
