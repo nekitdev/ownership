@@ -12,7 +12,7 @@ env:
   bot-name: nekit[bot]
   bot-email: bot@nekit.dev
   changelog: CHANGELOG-${{ inputs.version }}.md
-  name: ownership
+  workspace: ownership
 
 jobs:
   changelog:
@@ -86,10 +86,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Publish Derive
-        uses: cargo publish --package ${{ env.name }}-derive --token ${{ secrets.CARGO_TOKEN }}
+        run: cargo publish --package ${{ env.workspace }}-derive --token ${{ secrets.CARGO_TOKEN }}
 
       - name: Publish
-        run: cargo publish --package ${{ env.name }} --token ${{ secrets.CARGO_TOKEN }}
+        run: cargo publish --package ${{ env.workspace }} --token ${{ secrets.CARGO_TOKEN }}
 
   release:
     runs-on: ubuntu-latest
