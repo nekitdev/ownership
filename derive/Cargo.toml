@@ -1,0 +1,27 @@
+[package]
+name = "ownership-derive"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Derive macros for obtaining ownership."
+documentation = "https://docs.rs/ownership-derive"
+readme = "README.md"
+repository.workspace = true
+license.workspace = true
+keywords = ["ownership", "derive", "macro"]
+
+[lib]
+proc-macro = true
+
+[dependencies.non-empty-str]
+workspace = true
+
+[dependencies.proc-macro2]
+workspace = true
+
+[dependencies.quote]
+workspace = true
+
+[dependencies.syn]
+workspace = true

@@ -25,7 +25,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Run clippy
-        run: cargo clippy
+        run: cargo clippy --workspace
 
       - name: Run tests
-        run: cargo test
+        run: cargo test --workspace

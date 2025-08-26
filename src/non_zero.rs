@@ -5,13 +5,7 @@ mod import {
 macro_rules! impl_non_zero {
     ($($type: ty),+ $(,)?) => {
         $(
-            impl $crate::IntoOwned for $crate::non_zero::import::NonZero<$type> {
-                type Owned = Self;
-
-                fn into_owned(self) -> Self::Owned {
-                    self
-                }
-            }
+            $crate::impl_identity!($crate::non_zero::import::NonZero<$type>);
         )+
     };
 }

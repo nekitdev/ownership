@@ -1,6 +1,6 @@
 use cfg_if::cfg_if;
 
-use crate::{IntoOwned, iterable::recollect};
+use crate::{IntoOwned, impl_identity, iterable::recollect};
 
 cfg_if! {
     if #[cfg(feature = "std")] {
@@ -27,3 +27,5 @@ impl<T: IntoOwned> IntoOwned for Box<[T]> {
         recollect(self)
     }
 }
+
+impl_identity!(Box<str>);

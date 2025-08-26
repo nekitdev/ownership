@@ -21,7 +21,7 @@ Or by directly specifying it in the configuration like so:
 
 ```toml
 [dependencies]
-ownership = "0.1.1"
+ownership = "0.2.0"
 ```
 
 Alternatively, you can add it directly from the source:

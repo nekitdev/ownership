@@ -1,22 +1,55 @@
-[package]
-name = "ownership"
-version = "0.1.1"
+[workspace]
+members = ["derive"]
+
+[workspace.package]
+version = "0.2.0"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
 rust-version = "1.89"
+repository = "https://github.com/nekitdev/ownership"
+license = "MIT"
+
+[package]
+name = "ownership"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 description = "Obtaining ownership."
 documentation = "https://docs.rs/ownership"
 readme = "README.md"
-repository = "https://github.com/nekitdev/ownership"
-license = "MIT"
+repository.workspace = true
+license.workspace = true
 keywords = ["ownership", "owned"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
 
+[workspace.dependencies.cfg-if]
+version = "1.0.3"
+
+[workspace.dependencies.non-empty-str]
+version = "0.10.0"
+
+[workspace.dependencies.proc-macro2]
+version = "1.0.101"
+
+[workspace.dependencies.quote]
+version = "1.0.40"
+
+[workspace.dependencies.syn]
+version = "2.0.106"
+features = ["visit"]
+
+[dependencies.ownership-derive]
+path = "derive"
+version = "0.2.0"
+optional = true
+
 [dependencies.cfg-if]
-version = "1.0.1"
+workspace = true
 
 [features]
-default = ["std"]
+default = ["std", "derive"]
+derive = ["dep:ownership-derive"]
 std = []
 alloc = []
 

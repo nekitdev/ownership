@@ -14,16 +14,30 @@ use cfg_if::cfg_if;
 pub trait IntoOwned {
     /// The owned type produced by [`into_owned`].
     ///
+    /// This type enforces *idempotence* through its bound.
+    ///
     /// [`into_owned`]: Self::into_owned
-    type Owned;
+    type Owned: IntoOwned<Owned = Self::Owned>;
 
-    /// Consumes [`Self`] and converts it into the associated owned type.
+    /// Consumes [`Self`] and converts it into the associated [`Owned`] type.
+    ///
+    /// [`Owned`]: Self::Owned
     fn into_owned(self) -> Self::Owned;
 }
 
+#[cfg(feature = "derive")]
+pub use ownership_derive::IntoOwned;
+
 pub mod iterable;
 
+#[macro_use]
+pub mod macros;
+
 mod array;
+mod cmp;
+mod marker;
+mod net;
+mod never;
 mod non_zero;
 mod primitive;
 mod simple;
@@ -35,10 +49,16 @@ cfg_if! {
         pub mod cow;
 
         mod boxed;
+        mod c_string;
         mod collections;
+        mod string;
         mod vec;
     }
 }
 
-#[cfg(feature = "std")]
-mod hash;
+cfg_if! {
+    if #[cfg(feature = "std")] {
+        mod hash;
+        mod os_string;
+    }
+}
