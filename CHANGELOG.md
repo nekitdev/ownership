@@ -2,6 +2,15 @@
 
 <!-- changelogging: start -->
 
+## [0.2.0](https://github.com/nekitdev/ownership/tree/v0.2.0) (2025-08-26)
+
+### Features
+
+- Added `derive` feature to enable `#[derive(IntoOwned)]`.
+
+- Added more implementations of `IntoOwned` on standard types.
+  See the [documentation](https://docs.rs/ownership) for more.
+
 ## [0.1.1](https://github.com/nekitdev/ownership/tree/v0.1.1) (2025-08-05)
 
 No significant changes.
