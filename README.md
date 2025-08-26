@@ -3,6 +3,7 @@
 [![License][License Badge]][License]
 [![Version][Version Badge]][Crate]
 [![Downloads][Downloads Badge]][Crate]
+[![Documentation][Documentation Badge]][Documentation]
 [![Test][Test Badge]][Actions]
 
 > *Obtaining ownership.*
@@ -75,4 +76,5 @@ If you are interested in contributing to `ownership`, make sure to take a look a
 [License Badge]: https://img.shields.io/crates/l/ownership
 [Version Badge]: https://img.shields.io/crates/v/ownership
 [Downloads Badge]: https://img.shields.io/crates/dr/ownership
+[Documentation Badge]: https://img.shields.io/docsrs/ownership
 [Test Badge]: https://github.com/nekitdev/ownership/workflows/test/badge.svg
