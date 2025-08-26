@@ -48,10 +48,11 @@ optional = true
 workspace = true
 
 [features]
-default = ["std", "derive"]
+default = ["std"]
 derive = ["dep:ownership-derive"]
 std = []
 alloc = []
 
 [package.metadata.docs.rs]
+features = ["derive"]
 rustdoc-args = ["--cfg", "docsrs"]

@@ -1,5 +1,56 @@
 //! Obtaining ownership.
+//!
+//! The core of the `ownership` crate is the [`IntoOwned`] trait,
+//! which allows to consume values and convert them into owned types.
+//!
+//! If the `derive` feature is enabled, the aforementioned trait can be derived.
 
+#![cfg_attr(
+    all(feature = "std", feature = "derive"),
+    doc = r#"
+# Derive
+
+```
+use std::borrow::Cow;
+
+use ownership::IntoOwned;
+
+#[derive(IntoOwned)]
+struct Config<'h, 'c, T> {
+    name: Cow<'c, str>,
+    value: T,
+    #[ownership(as_is)]
+    help: &'h str, // <- returned as-is
+}
+```
+
+Generates code functionally equivalent to:
+
+```
+use std::borrow::Cow;
+
+use ownership::IntoOwned;
+
+struct Config<'h, 'c, T> {
+    name: Cow<'c, str>,
+    value: T,
+    help: &'h str,
+}
+
+impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
+    type Owned = Config<'h, 'static, <T as IntoOwned>::Owned>;
+
+    fn into_owned(self) -> <Self as IntoOwned>::Owned {
+        Self::Owned {
+            name: IntoOwned::into_owned(self.name),
+            value: IntoOwned::into_owned(self.value),
+            help: self.help, // <- here
+        }
+    }
+}
+```
+    "#
+)]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
