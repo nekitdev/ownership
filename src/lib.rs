@@ -54,7 +54,7 @@ impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
