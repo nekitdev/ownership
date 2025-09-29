@@ -1,4 +1,4 @@
-//! Obtaining ownership of [`Cow<'_, T>`].
+//! Obtaining ownership of [`Cow<'_, T>`](Cow).
 
 #[cfg(not(any(feature = "std", feature = "alloc")))]
 compile_error!("expected either `std` or `alloc` to be enabled");
