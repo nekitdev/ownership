@@ -9,9 +9,6 @@ on:
     branches:
       - "**"
 
-env:
-  workspace: ownership
-
 jobs:
   test:
     strategy:
@@ -27,11 +24,8 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Run Clippy on Derive
-        run: cargo clippy --package ${{ env.workspace }}-derive
-
-      - name: Run clippy
-        run: cargo clippy --package ${{ env.workspace }}
+      - name: Run Clippy
+        run: cargo clippy --workspace
 
       - name: Run tests
-        run: cargo test --package ${{ env.workspace }} --all-features
+        run: cargo test --workspace --all-features
