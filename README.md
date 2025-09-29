@@ -22,7 +22,7 @@ Or by directly specifying it in the configuration like so:
 
 ```toml
 [dependencies]
-ownership = "0.2.1"
+ownership = "0.2.2"
 ```
 
 Alternatively, you can add it directly from the source:
