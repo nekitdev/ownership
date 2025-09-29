@@ -5,7 +5,7 @@ members = ["derive"]
 version = "0.2.0"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
-rust-version = "1.89"
+rust-version = "1.90"
 repository = "https://github.com/nekitdev/ownership"
 license = "MIT"
 
@@ -22,9 +22,6 @@ repository.workspace = true
 license.workspace = true
 keywords = ["ownership", "owned"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
-
-[workspace.dependencies.cfg-if]
-version = "1.0.3"
 
 [workspace.dependencies.non-empty-str]
 version = "0.10.0"
@@ -43,9 +40,6 @@ features = ["visit"]
 path = "derive"
 version = "0.2.0"
 optional = true
-
-[dependencies.cfg-if]
-workspace = true
 
 [features]
 default = ["std"]

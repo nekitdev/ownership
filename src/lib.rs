@@ -7,7 +7,7 @@
 
 #![cfg_attr(
     all(feature = "std", feature = "derive"),
-    doc = r#"
+    doc = r"
 # Derive
 
 ```
@@ -49,7 +49,7 @@ impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
     }
 }
 ```
-    "#
+    "
 )]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -58,8 +58,6 @@ impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
-
-use cfg_if::cfg_if;
 
 /// Obtaining ownership.
 pub trait IntoOwned {
@@ -95,21 +93,26 @@ mod simple;
 mod tuple;
 mod unit;
 
-cfg_if! {
-    if #[cfg(any(feature = "std", feature = "alloc"))] {
-        pub mod cow;
+#[cfg(any(feature = "std", feature = "alloc"))]
+pub mod cow;
 
-        mod boxed;
-        mod c_string;
-        mod collections;
-        mod string;
-        mod vec;
-    }
-}
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod boxed;
 
-cfg_if! {
-    if #[cfg(feature = "std")] {
-        mod hash;
-        mod os_string;
-    }
-}
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod c_string;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod collections;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod string;
+
+#[cfg(any(feature = "std", feature = "alloc"))]
+mod vec;
+
+#[cfg(feature = "std")]
+mod hash;
+
+#[cfg(feature = "std")]
+mod os_string;

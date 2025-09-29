@@ -1,16 +1,13 @@
 //! Obtaining ownership of [`Cow<'_, T>`].
 
-use cfg_if::cfg_if;
+#[cfg(not(any(feature = "std", feature = "alloc")))]
+compile_error!("expected either `std` or `alloc` to be enabled");
 
-cfg_if! {
-    if #[cfg(feature = "std")] {
-        use std::borrow::{Cow, ToOwned};
-    } else if #[cfg(feature = "alloc")] {
-        use alloc::borrow::{Cow, ToOwned};
-    } else {
-        compile_error!("expected either `std` or `alloc` to be enabled");
-    }
-}
+#[cfg(feature = "std")]
+use std::borrow::Cow;
+
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+use alloc::borrow::{Cow, ToOwned};
 
 use crate::IntoOwned;
 
