@@ -1,13 +1,13 @@
 use std::marker::PhantomData;
 
-use non_empty_str::const_str;
+use non_empty_str::const_non_empty_str;
 use proc_macro2::TokenStream;
 use quote::ToTokens;
 use syn::{Attribute as AttributeInput, Error, Meta, Path, meta::ParseNestedMeta};
 
 use crate::{
     context::Context,
-    name::{ConstStr, Name},
+    name::{ConstNonEmptyStr, Name},
 };
 
 pub struct Attribute<'c, T> {
@@ -78,7 +78,7 @@ mod sealed {
 }
 
 pub trait Kind: sealed::Sealed {
-    const NAME: ConstStr;
+    const NAME: ConstNonEmptyStr;
 
     fn unknown_meta(meta: &ParseNestedMeta<'_>, path: &Path) -> Error {
         let name = path.to_token_stream().to_string().replace(SPACE, EMPTY);
@@ -110,15 +110,15 @@ impl sealed::Sealed for Field {}
 impl sealed::Sealed for Variant {}
 
 impl Kind for Container {
-    const NAME: ConstStr = const_str!("container");
+    const NAME: ConstNonEmptyStr = const_non_empty_str!("container");
 }
 
 impl Kind for Field {
-    const NAME: ConstStr = const_str!("field");
+    const NAME: ConstNonEmptyStr = const_non_empty_str!("field");
 }
 
 impl Kind for Variant {
-    const NAME: ConstStr = const_str!("variant");
+    const NAME: ConstNonEmptyStr = const_non_empty_str!("variant");
 }
 
 pub struct Attributes<K: Kind> {
