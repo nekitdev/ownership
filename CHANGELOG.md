@@ -2,6 +2,10 @@
 
 <!-- changelogging: start -->
 
+## [0.2.4](https://github.com/nekitdev/ownership/tree/v0.2.4) (2025-10-15)
+
+No significant changes.
+
 ## [0.2.3](https://github.com/nekitdev/ownership/tree/v0.2.3) (2025-10-14)
 
 No significant changes.
