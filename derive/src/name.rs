@@ -1,23 +1,22 @@
 use std::fmt;
 
-use non_empty_str::{NonEmptyStr, const_non_empty_str};
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens, TokenStreamExt};
 use syn::{Ident, Path};
 
-pub type ConstNonEmptyStr = &'static NonEmptyStr;
+pub type ConstStr = &'static str;
 
 #[derive(Clone, Copy)]
 pub struct Name {
-    string: ConstNonEmptyStr,
+    string: ConstStr,
 }
 
 impl Name {
-    pub const fn new(string: ConstNonEmptyStr) -> Self {
+    pub const fn new(string: ConstStr) -> Self {
         Self { string }
     }
 
-    pub const fn get(self) -> ConstNonEmptyStr {
+    pub const fn get(self) -> ConstStr {
         self.string
     }
 
@@ -40,15 +39,15 @@ impl Name {
     }
 
     pub fn identifier(self) -> Ident {
-        Ident::new(self.get().as_str(), Span::call_site())
+        Ident::new(self.get(), Span::call_site())
     }
 }
 
-pub const PHANTOM_DATA: ConstNonEmptyStr = const_non_empty_str!("PhantomData");
-pub const DERIVE: ConstNonEmptyStr = const_non_empty_str!("derive");
-pub const STATIC: ConstNonEmptyStr = const_non_empty_str!("static");
-pub const OWNERSHIP: ConstNonEmptyStr = const_non_empty_str!("ownership");
-pub const AS_IS: ConstNonEmptyStr = const_non_empty_str!("as_is");
+pub const PHANTOM_DATA: ConstStr = "PhantomData";
+pub const DERIVE: ConstStr = "derive";
+pub const STATIC: ConstStr = "static";
+pub const OWNERSHIP: ConstStr = "ownership";
+pub const AS_IS: ConstStr = "as_is";
 
 impl fmt::Display for Name {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

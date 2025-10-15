@@ -14,9 +14,6 @@ keywords = ["ownership", "derive", "macro"]
 [lib]
 proc-macro = true
 
-[dependencies.non-empty-str]
-workspace = true
-
 [dependencies.proc-macro2]
 workspace = true
 

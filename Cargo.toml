@@ -2,7 +2,7 @@
 members = ["derive"]
 
 [workspace.package]
-version = "0.2.3"
+version = "0.2.4"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
 rust-version = "1.90"
@@ -23,9 +23,6 @@ license.workspace = true
 keywords = ["ownership", "owned"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
 
-[workspace.dependencies.non-empty-str]
-version = "0.11.0"
-
 [workspace.dependencies.proc-macro2]
 version = "1.0.101"
 
@@ -38,7 +35,7 @@ features = ["visit"]
 
 [dependencies.ownership-derive]
 path = "derive"
-version = "0.2.3"
+version = "0.2.4"
 optional = true
 
 [features]
