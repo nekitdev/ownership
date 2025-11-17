@@ -2,6 +2,15 @@
 
 <!-- changelogging: start -->
 
+## [0.3.0](https://github.com/nekitdev/ownership/tree/v0.3.0) (2025-11-17)
+
+### Features
+
+- Added `IntoOwned` for `time` types.
+
+  Specifically, the trait is implemented for `Duration` unconditionally,
+  and with `std` feature it is also implemented for `Instant` and `SystemTime`.
+
 ## [0.2.4](https://github.com/nekitdev/ownership/tree/v0.2.4) (2025-10-15)
 
 No significant changes.
