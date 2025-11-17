@@ -2,7 +2,7 @@
 members = ["derive"]
 
 [workspace.package]
-version = "0.2.4"
+version = "0.3.0"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
 rust-version = "1.91"
@@ -35,7 +35,7 @@ features = ["visit"]
 
 [dependencies.ownership-derive]
 path = "derive"
-version = "0.2.4"
+version = "0.3.0"
 optional = true
 
 [features]
