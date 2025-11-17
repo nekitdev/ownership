@@ -5,7 +5,7 @@ members = ["derive"]
 version = "0.2.4"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
-rust-version = "1.90"
+rust-version = "1.91"
 repository = "https://github.com/nekitdev/ownership"
 license = "MIT"
 
