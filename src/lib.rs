@@ -84,6 +84,7 @@ pub mod macros;
 
 mod array;
 mod cmp;
+mod duration;
 mod marker;
 mod net;
 mod never;
@@ -116,3 +117,6 @@ mod hash;
 
 #[cfg(feature = "std")]
 mod os_string;
+
+#[cfg(feature = "std")]
+mod time;
