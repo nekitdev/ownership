@@ -2,10 +2,10 @@
 members = ["derive"]
 
 [workspace.package]
-version = "0.3.0"
+version = "0.4.0"
 authors = ["nekitdev <nekit@nekit.dev>"]
 edition = "2024"
-rust-version = "1.91"
+rust-version = "1.98"
 repository = "https://github.com/nekitdev/ownership"
 license = "MIT"
 
@@ -24,22 +24,28 @@ keywords = ["ownership", "owned"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
 
 [workspace.dependencies.proc-macro2]
-version = "1.0.103"
+version = "1.0.107"
+default-features = false
 
 [workspace.dependencies.quote]
-version = "1.0.42"
+version = "1.0.47"
+default-features = false
 
 [workspace.dependencies.syn]
-version = "2.0.110"
-features = ["visit"]
+version = "3.0.6"
+default-features = false
+
+[workspace.dependencies.trait-aliases]
+version = "0.4.0"
+default-features = false
 
 [dependencies.ownership-derive]
 path = "derive"
-version = "0.3.0"
+version = "0.4.0"
 optional = true
 
 [features]
-default = ["std"]
+default = ["std", "derive"] # TODO: remove "derive"
 derive = ["dep:ownership-derive"]
 std = []
 alloc = []

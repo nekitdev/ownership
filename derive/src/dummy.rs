@@ -1,9 +1,9 @@
 use proc_macro2::TokenStream;
-use quote::quote;
+use quote::{ToTokens, quote};
 
-use crate::name::Name;
+use crate::names::Name;
 
-pub fn wrap_in_const(code: &TokenStream) -> TokenStream {
+pub fn wrap_in_const<T: ToTokens>(tokens: &T) -> TokenStream {
     let ownership = Name::OWNERSHIP;
 
     quote! {
@@ -11,7 +11,7 @@ pub fn wrap_in_const(code: &TokenStream) -> TokenStream {
         const _: () = {
             use #ownership as _ownership;
 
-            #code
+            #tokens
         };
     }
 }

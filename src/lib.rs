@@ -60,6 +60,12 @@ impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
 extern crate alloc;
 
 /// Obtaining ownership.
+///
+/// This trait provides the [`into_owned`] method that consumes the value
+/// and converts it into the associated [`Owned`] type.
+///
+/// [`into_owned`]: Self::into_owned
+/// [`Owned`]: Self::Owned
 pub trait IntoOwned {
     /// The owned type produced by [`into_owned`].
     ///
@@ -94,29 +100,23 @@ mod simple;
 mod tuple;
 mod unit;
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-pub mod cow;
+cfg_select! {
+    any(feature = "std", feature = "alloc") => {
+        pub mod cow;
+        mod boxed;
+        mod c_string;
+        mod collections;
+        mod string;
+        mod vec;
+    }
+    _ => {}
+}
 
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod boxed;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod c_string;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod collections;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod string;
-
-#[cfg(any(feature = "std", feature = "alloc"))]
-mod vec;
-
-#[cfg(feature = "std")]
-mod hash;
-
-#[cfg(feature = "std")]
-mod os_string;
-
-#[cfg(feature = "std")]
-mod time;
+cfg_select! {
+    feature = "std" => {
+        mod hash;
+        mod os_string;
+        mod time;
+    }
+    _ => {}
+}

@@ -16,9 +16,22 @@ proc-macro = true
 
 [dependencies.proc-macro2]
 workspace = true
+features = ["proc-macro"]
 
 [dependencies.quote]
+workspace = true
+features = ["proc-macro"]
+
+[dependencies.trait-aliases]
 workspace = true
 
 [dependencies.syn]
 workspace = true
+features = [
+    "derive",
+    "parsing",
+    "printing",
+    "visit",
+    "proc-macro",
+    "clone-impls",
+]

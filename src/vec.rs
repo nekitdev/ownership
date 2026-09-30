@@ -1,8 +1,14 @@
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-compile_error!("expected either `std` or `alloc` to be enabled");
-
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::vec::Vec;
+cfg_select! {
+    feature = "std" => {
+        // no imports needed
+    }
+    feature = "alloc" => {
+        use alloc::vec::Vec;
+    }
+    _ => {
+        compile_error!("expected either `std` or `alloc` to be enabled");
+    }
+}
 
 use crate::{IntoOwned, iterable::recollect};
 

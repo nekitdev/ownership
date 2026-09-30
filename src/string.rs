@@ -1,9 +1,13 @@
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-compile_error!("expected either `std` or `alloc` to be enabled");
-
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::string::String;
-
-use crate::impl_identity;
+cfg_select! {
+    feature = "std" => {
+        // no imports needed
+    }
+    feature = "alloc" => {
+        use alloc::string::String;
+    }
+    _ => {
+        compile_error!("expected either `std` or `alloc` to be enabled");
+    }
+}
 
 impl_identity!(String);

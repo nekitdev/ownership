@@ -1,245 +1,154 @@
-use std::{collections::HashSet, iter::once};
+use std::iter::once;
 
 use syn::{
-    AngleBracketedGenericArguments, Field, GenericArgument, GenericParam, Generics, Ident,
-    Lifetime, Path, PredicateType, TraitBound, TraitBoundModifier, Type, TypeParamBound, TypePath,
-    WherePredicate, parse_quote,
-    punctuated::{Pair, Punctuated},
+    AngleBracketedGenericArguments, ConstParam, GenericArgument, GenericParam, Generics, Ident,
+    Lifetime, LifetimeParam, PredicateType, TraitBound, TraitBoundModifiers, Type, TypeParam,
+    TypeParamBound, TypePath, WherePredicate, parse_quote,
     token::{Colon, Gt, Lt},
-    visit::{Visit, visit_field, visit_lifetime, visit_path},
 };
 
 use crate::{
-    ast::{Container, Data},
-    attributes::{ContainerAttributes, FieldAttributes, VariantAttributes},
+    By,
+    ast::Container,
+    defaults,
     expand::into_owned_trait,
-    name::Name,
+    find::{Filter, Relevant, find},
+    lifetimes::{self, Promoted},
+    names::Name,
 };
 
-pub fn remove_default(parameter: &mut GenericParam) {
-    match parameter {
-        GenericParam::Type(type_parameter) => {
-            type_parameter.eq_token = None;
-            type_parameter.default = None;
-        }
-        GenericParam::Const(const_parameter) => {
-            const_parameter.eq_token = None;
-            const_parameter.default = None;
-        }
-        GenericParam::Lifetime(_) => {
-            // lifetime parameters do not have defaults
-        }
-    }
-}
-
-pub fn remove_defaults(generics: &mut Generics) {
-    generics.params.iter_mut().for_each(remove_default);
-}
-
-pub fn build_generic_arguments<L: Fn(&Ident) -> bool, T: Fn(&Ident) -> bool>(
-    lifetime_predicate: L,
-    type_predicate: T,
+pub fn build_generic_arguments(
+    promoted: &Promoted<'_>,
+    relevant: &Relevant<'_>,
     generics: &Generics,
 ) -> AngleBracketedGenericArguments {
-    let mut generic_arguments = AngleBracketedGenericArguments {
-        colon2_token: None,
-        lt_token: Lt::default(),
-        args: Punctuated::new(),
-        gt_token: Gt::default(),
-    };
+    let iterator = generics.params.iter().map(|parameter| match parameter {
+        GenericParam::Lifetime(lifetime_parameter) => {
+            GenericArgument::Lifetime(map_lifetime(promoted, lifetime_parameter))
+        }
+        GenericParam::Type(type_parameter) => {
+            GenericArgument::Type(map_type(relevant, type_parameter))
+        }
+        GenericParam::Const(const_parameter) => GenericArgument::Type(map_const(const_parameter)),
+    });
 
-    let into_owned = into_owned_trait();
-
-    generic_arguments
-        .args
-        .extend(generics.params.iter().map(|parameter| match parameter {
-            GenericParam::Lifetime(lifetime_parameter) => {
-                let mut lifetime = lifetime_parameter.lifetime.clone();
-
-                if lifetime_predicate(&lifetime.ident) {
-                    lifetime.ident = Name::STATIC.identifier();
-                }
-
-                GenericArgument::Lifetime(lifetime)
-            }
-            GenericParam::Type(type_parameter) => {
-                let identifier = type_parameter.ident.clone();
-
-                let generated: Type = if type_predicate(&identifier) {
-                    parse_quote! {
-                        <#identifier as #into_owned>::Owned
-                    }
-                } else {
-                    parse_quote! {
-                        #identifier
-                    }
-                };
-
-                GenericArgument::Type(generated)
-            }
-            GenericParam::Const(const_parameter) => {
-                let identifier = const_parameter.ident.clone();
-
-                let generated: Type = parse_quote! {
-                    #identifier
-                };
-
-                GenericArgument::Type(generated)
-            }
-        }));
-
-    generic_arguments
+    generic_arguments(iterator)
 }
 
-const ONE: usize = 1;
+pub fn map_lifetime(promoted: &Promoted<'_>, parameter: &LifetimeParam) -> Lifetime {
+    let mut lifetime = parameter.lifetime.clone();
 
-pub fn apply_build<
-    F: Fn(&ContainerAttributes, &FieldAttributes, Option<&VariantAttributes>) -> bool,
->(
+    if promoted.contains(lifetime.by_ref()) {
+        make_static(lifetime.by_mut());
+    }
+
+    lifetime
+}
+
+pub fn make_static(lifetime: &mut Lifetime) {
+    lifetime.ident = Name::STATIC.ident();
+}
+
+pub fn map_type(relevant: &Relevant<'_>, parameter: &TypeParam) -> Type {
+    let name = parameter.ident.clone();
+
+    let path = if relevant.contains(name.by_ref()) {
+        as_into_owned(name)
+    } else {
+        type_path(name)
+    };
+
+    Type::Path(path)
+}
+
+pub fn as_into_owned(name: Ident) -> TypePath {
+    let into_owned = into_owned_trait();
+
+    parse_quote! {
+        <#name as #into_owned>::Owned
+    }
+}
+
+pub fn map_const(parameter: &ConstParam) -> Type {
+    let name = parameter.ident.clone();
+
+    Type::Path(type_path(name))
+}
+
+pub fn generic_arguments<A: IntoIterator<Item = GenericArgument>>(
+    arguments: A,
+) -> AngleBracketedGenericArguments {
+    AngleBracketedGenericArguments {
+        colon2_token: None,
+        lt_token: Lt::default(),
+        args: arguments.into_iter().collect(),
+        gt_token: Gt::default(),
+    }
+}
+
+pub fn apply_and_build<F: Filter>(
     container: &Container<'_>,
     generics: &mut Generics,
-    filter: F,
+    filter: &F,
 ) -> AngleBracketedGenericArguments {
-    struct FindParameters<'a> {
-        all: HashSet<Ident>,
-        relevant: HashSet<Ident>,
-        associated: Vec<&'a TypePath>,
-        lifetimes: HashSet<Ident>,
-    }
+    defaults::remove(generics);
 
-    impl FindParameters<'_> {
-        fn new(generics: &Generics) -> Self {
-            let all = generics
-                .type_params()
-                .map(|type_parameter| type_parameter.ident.clone())
-                .collect();
+    let finder = find(container, generics, filter);
 
-            let relevant = HashSet::new();
-            let associated = Vec::new();
-            let lifetimes = HashSet::new();
+    let (relevant, associated, start) = finder.split();
 
-            Self {
-                all,
-                relevant,
-                associated,
-                lifetimes,
-            }
-        }
-    }
-
-    impl<'a> Visit<'a> for FindParameters<'a> {
-        fn visit_field(&mut self, field: &'a Field) {
-            let mut ungrouped = &field.ty;
-
-            while let Type::Group(grouped) = ungrouped {
-                ungrouped = &grouped.elem;
-            }
-
-            #[allow(clippy::collapsible_if)]
-            if let Type::Path(path_type) = ungrouped {
-                if let Some(Pair::Punctuated(path_segment, _)) =
-                    path_type.path.segments.pairs().next()
-                {
-                    if self.all.contains(&path_segment.ident) {
-                        self.associated.push(path_type);
-                    }
-                }
-            }
-
-            visit_field(self, field);
-        }
-
-        fn visit_path(&mut self, path: &'a Path) {
-            if Name::PHANTOM_DATA.is_last_in(path) {
-                // NOTE: `PhantomData<T>` is `IntoOwned` regardless of `T`
-                return;
-            }
-
-            if path.leading_colon.is_none() && path.segments.len() == ONE {
-                let identifier = &path.segments.first().unwrap().ident;
-
-                if self.all.contains(identifier) {
-                    self.relevant.insert(identifier.clone());
-                }
-            }
-
-            visit_path(self, path);
-        }
-
-        fn visit_lifetime(&mut self, lifetime: &'a Lifetime) {
-            self.lifetimes.insert(lifetime.ident.clone());
-
-            visit_lifetime(self, lifetime);
-        }
-    }
-
-    let mut find_parameters = FindParameters::new(generics);
-
-    match container.data {
-        Data::Enum(ref variants) => variants.iter().for_each(|variant| {
-            variant
-                .fields
-                .iter()
-                .filter(|field| {
-                    filter(
-                        &container.attributes,
-                        &field.attributes,
-                        Some(&variant.attributes),
-                    )
-                })
-                .for_each(|relevant| find_parameters.visit_field(relevant.input));
-        }),
-        Data::Struct(_, ref fields) => fields
-            .iter()
-            .filter(|field| filter(&container.attributes, &field.attributes, None))
-            .for_each(|field| find_parameters.visit_field(field.input)),
-    }
-
-    let relevant = find_parameters.relevant;
-    let associated = find_parameters.associated;
-
-    let mut lifetimes = find_parameters.lifetimes;
-
-    generics.lifetimes().for_each(|lifetime_parameter| {
-        if lifetime_parameter
-            .bounds
-            .iter()
-            .any(|lifetime| lifetimes.contains(&lifetime.ident))
-        {
-            lifetimes.insert(lifetime_parameter.lifetime.ident.clone());
-        }
-    });
+    let outlived = lifetimes::outlived(generics);
+    let promoted = lifetimes::promoted(outlived.by_ref(), start);
 
     let predicates: Vec<_> = generics
         .type_params()
         .map(|type_parameter| type_parameter.ident.clone())
-        .filter(|identifier| relevant.contains(identifier))
-        .map(|identifier| TypePath {
-            qself: None,
-            path: identifier.into(),
-        })
+        .filter(|reference| relevant.contains(reference))
+        .map(type_path)
         .chain(associated.into_iter().cloned())
-        .map(|bounded| {
-            WherePredicate::Type(PredicateType {
-                lifetimes: None,
-                bounded_ty: Type::Path(bounded),
-                colon_token: Colon::default(),
-                bounds: once(TypeParamBound::Trait(TraitBound {
-                    paren_token: None,
-                    modifier: TraitBoundModifier::None,
-                    lifetimes: None,
-                    path: into_owned_trait(),
-                }))
-                .collect(),
-            })
-        })
+        .map(where_predicate)
         .collect();
+
+    let generic_arguments = build_generic_arguments(promoted.by_ref(), relevant.by_ref(), generics);
 
     generics.make_where_clause().predicates.extend(predicates);
 
-    build_generic_arguments(
-        |lifetime| lifetimes.contains(lifetime),
-        |identifier| relevant.contains(identifier),
-        generics,
-    )
+    generic_arguments
+}
+
+pub fn type_path(name: Ident) -> TypePath {
+    TypePath {
+        attrs: Vec::new(),
+        qself: None,
+        path: name.into(),
+    }
+}
+
+pub fn into_owned_bound() -> TraitBound {
+    TraitBound {
+        paren_token: None,
+        // non-exhaustive, `Default` guarantees no modifiers
+        lifetimes: None,
+        modifiers: TraitBoundModifiers::default(),
+        maybe: None,
+        path: into_owned_trait(),
+    }
+}
+
+pub fn predicate_type(path: TypePath) -> PredicateType {
+    PredicateType {
+        attrs: Vec::new(),
+        lifetimes: None,
+        bounded_ty: Type::Path(path),
+        colon_token: Colon::default(),
+        bounds: one(TypeParamBound::Trait(into_owned_bound())),
+    }
+}
+
+pub fn where_predicate(path: TypePath) -> WherePredicate {
+    WherePredicate::Type(predicate_type(path))
+}
+
+pub fn one<T, C: FromIterator<T>>(value: T) -> C {
+    once(value).collect()
 }

@@ -1,14 +1,14 @@
-#![allow(dead_code)] // allow `input` to be used later if needed
-
 use syn::{
     Data as DataInput, DeriveInput, Field as FieldInput, Fields as FieldsInput, Generics, Ident,
-    Member, Variant as VariantInput,
+    Index, Member, Variant as VariantInput,
 };
 
 use crate::{
+    By,
     attributes::{ContainerAttributes, FieldAttributes, VariantAttributes},
     context::Context,
-    name::Name,
+    index::{call_site, indexer},
+    names::Name,
 };
 
 #[derive(Clone, Copy)]
@@ -33,23 +33,142 @@ pub struct Container<'c> {
     pub attributes: ContainerAttributes,
     pub data: Data<'c>,
     pub generics: &'c Generics,
-    pub input: &'c DeriveInput,
+    // pub input: &'c DeriveInput, // unused
+}
+
+impl<'c> Container<'c> {
+    pub const fn attributes(&self) -> ContainerAttributes {
+        self.attributes
+    }
+
+    pub const fn data(&self) -> &Data<'c> {
+        &self.data
+    }
+
+    pub const fn generics(&self) -> &'c Generics {
+        self.generics
+    }
 }
 
 pub type Variants<'v> = [Variant<'v>];
 pub type Fields<'f> = [Field<'f>];
 
+pub struct EnumData<'e> {
+    pub variants: Vec<Variant<'e>>,
+}
+
+impl<'e> EnumData<'e> {
+    pub const fn new(variants: Vec<Variant<'e>>) -> Self {
+        Self { variants }
+    }
+
+    pub const fn variants(&self) -> &Variants<'e> {
+        self.variants.as_slice()
+    }
+
+    pub fn from_variants_ast<V: IntoIterator<Item = &'e VariantInput>>(
+        context: &Context,
+        variants: V,
+    ) -> Self {
+        let collected = variants
+            .into_iter()
+            .map(|input| {
+                let attributes = VariantAttributes::from_ast(context, input.attrs.iter());
+
+                let data = StructData::from_ast(context, input.fields.by_ref());
+
+                let name = input.ident.clone();
+
+                Variant {
+                    name,
+                    attributes,
+                    data,
+                    // input,
+                }
+            })
+            .collect();
+
+        Self::new(collected)
+    }
+}
+
+pub struct StructData<'s> {
+    pub style: Style,
+    pub fields: Vec<Field<'s>>,
+}
+
+impl<'s> StructData<'s> {
+    pub const fn new(style: Style, fields: Vec<Field<'s>>) -> Self {
+        Self { style, fields }
+    }
+
+    pub const fn style(&self) -> Style {
+        self.style
+    }
+
+    pub const fn fields(&self) -> &Fields<'s> {
+        self.fields.as_slice()
+    }
+
+    pub fn from_ast(context: &Context, fields: &'s FieldsInput) -> Self {
+        let style = Style::of(fields);
+
+        Self::from_style_and_fields_ast(context, style, fields.iter())
+    }
+
+    pub fn from_style_and_fields_ast<F: IntoIterator<Item = &'s FieldInput>>(
+        context: &Context,
+        style: Style,
+        fields: F,
+    ) -> Self {
+        let collected = indexer()
+            .map(call_site)
+            .zip(fields)
+            .map(|(index, input)| {
+                let member = member(index, input.ident.clone());
+
+                let attributes = FieldAttributes::from_ast(context, input.attrs.iter());
+
+                Field {
+                    member,
+                    attributes,
+                    input,
+                }
+            })
+            .collect();
+
+        Self::new(style, collected)
+    }
+}
+
 pub enum Data<'d> {
-    Enum(Vec<Variant<'d>>),
-    Struct(Style, Vec<Field<'d>>),
+    Enum(EnumData<'d>),
+    Struct(StructData<'d>),
+}
+
+impl<'d> Data<'d> {
+    pub fn from_ast(context: &Context, input: &'d DataInput) -> Option<Self> {
+        match input {
+            DataInput::Enum(enum_data) => {
+                let data = EnumData::from_variants_ast(context, enum_data.variants.iter());
+
+                Some(Self::Enum(data))
+            }
+            DataInput::Struct(struct_data) => {
+                let data = StructData::from_ast(context, struct_data.fields.by_ref());
+
+                Some(Self::Struct(data))
+            }
+            DataInput::Union(_) => None,
+        }
+    }
 }
 
 pub struct Variant<'v> {
     pub name: Ident,
     pub attributes: VariantAttributes,
-    pub style: Style,
-    pub fields: Vec<Field<'v>>,
-    pub input: &'v VariantInput,
+    pub data: StructData<'v>,
+    // pub input: &'v VariantInput, // unused
 }
 
 impl Variant<'_> {
@@ -57,8 +176,16 @@ impl Variant<'_> {
         &self.name
     }
 
-    pub fn fields(&self) -> &Fields<'_> {
-        &self.fields
+    pub const fn attributes(&self) -> VariantAttributes {
+        self.attributes
+    }
+
+    pub const fn style(&self) -> Style {
+        self.data.style()
+    }
+
+    pub const fn fields(&self) -> &Fields<'_> {
+        self.data.fields()
     }
 }
 
@@ -68,9 +195,17 @@ pub struct Field<'f> {
     pub input: &'f FieldInput,
 }
 
-impl Field<'_> {
+impl<'f> Field<'f> {
     pub const fn member(&self) -> &Member {
         &self.member
+    }
+
+    pub const fn attributes(&self) -> FieldAttributes {
+        self.attributes
+    }
+
+    pub const fn input(&self) -> &'f FieldInput {
+        self.input
     }
 }
 
@@ -78,16 +213,9 @@ impl<'c> Container<'c> {
     pub fn from_ast(context: &Context, input: &'c DeriveInput) -> Option<Self> {
         let attributes = ContainerAttributes::from_ast(context, input.attrs.iter());
 
-        let data = match input.data {
-            DataInput::Enum(ref enum_data) => {
-                Data::Enum(enum_from_ast(context, enum_data.variants.iter()))
-            }
-            DataInput::Struct(ref struct_data) => {
-                let (style, fields) = struct_from_ast(context, &struct_data.fields);
-
-                Data::Struct(style, fields)
-            }
-            DataInput::Union(_) => {
+        let data = match Data::from_ast(context, input.data.by_ref()) {
+            Some(data) => data,
+            None => {
                 let message = format!(
                     "`{ownership}` does not support `{derive}` for unions",
                     ownership = Name::OWNERSHIP,
@@ -100,70 +228,21 @@ impl<'c> Container<'c> {
             }
         };
 
+        let name = input.ident.clone();
+        let generics = input.generics.by_ref();
+
         let item = Self {
-            name: input.ident.clone(),
+            name,
             attributes,
             data,
-            generics: &input.generics,
-            input,
+            generics,
+            // input,
         };
 
         Some(item)
     }
 }
 
-fn enum_from_ast<'a, V: IntoIterator<Item = &'a VariantInput>>(
-    context: &Context,
-    variants: V,
-) -> Vec<Variant<'a>> {
-    variants
-        .into_iter()
-        .map(|input| {
-            let attributes = VariantAttributes::from_ast(context, input.attrs.iter());
-
-            let (style, fields) = struct_from_ast(context, &input.fields);
-
-            let name = input.ident.clone();
-
-            Variant {
-                name,
-                attributes,
-                style,
-                fields,
-                input,
-            }
-        })
-        .collect()
-}
-
-fn struct_from_ast<'a>(context: &Context, fields: &'a FieldsInput) -> (Style, Vec<Field<'a>>) {
-    (Style::of(fields), fields_from_ast(context, fields.iter()))
-}
-
-fn fields_from_ast<'a, F: IntoIterator<Item = &'a FieldInput>>(
-    context: &Context,
-    fields: F,
-) -> Vec<Field<'a>> {
-    fields
-        .into_iter()
-        .enumerate()
-        .map(|(index, input)| {
-            let member = member(index, input.ident.as_ref());
-
-            let attributes = FieldAttributes::from_ast(context, input.attrs.iter());
-
-            Field {
-                member,
-                attributes,
-                input,
-            }
-        })
-        .collect()
-}
-
-fn member(index: usize, option: Option<&Ident>) -> Member {
-    option.map_or_else(
-        || Member::Unnamed(index.into()),
-        |name| Member::Named(name.clone()),
-    )
+pub fn member(index: Index, maybe: Option<Ident>) -> Member {
+    maybe.map_or_else(|| Member::Unnamed(index), Member::Named)
 }

@@ -1,10 +1,6 @@
 use syn::{AngleBracketedGenericArguments, Generics, Ident};
 
-use crate::{
-    ast::Container,
-    attributes::{ContainerAttributes, FieldAttributes, VariantAttributes},
-    bounds::{apply_build, remove_defaults},
-};
+use crate::{ast::Container, attributes::not_as_is, bounds::apply_and_build};
 
 pub struct Parameters {
     pub name: Ident,
@@ -26,22 +22,22 @@ impl Parameters {
     }
 
     pub fn build_generics(container: &Container<'_>) -> (Generics, AngleBracketedGenericArguments) {
-        let mut generics = container.generics.clone();
+        let mut generics = container.generics().clone();
 
-        remove_defaults(&mut generics);
-
-        let generic_arguments = apply_build(container, &mut generics, Self::not_as_is);
+        let generic_arguments = apply_and_build(container, &mut generics, &not_as_is);
 
         (generics, generic_arguments)
     }
 
-    pub fn not_as_is(
-        container: &ContainerAttributes,
-        field: &FieldAttributes,
-        variant_option: Option<&VariantAttributes>,
-    ) -> bool {
-        !container.as_is()
-            && !field.as_is()
-            && variant_option.is_none_or(|variant| !variant.as_is())
+    pub const fn name(&self) -> &Ident {
+        &self.name
+    }
+
+    pub const fn generics(&self) -> &Generics {
+        &self.generics
+    }
+
+    pub const fn generic_arguments(&self) -> &AngleBracketedGenericArguments {
+        &self.generic_arguments
     }
 }

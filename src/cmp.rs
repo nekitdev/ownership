@@ -3,7 +3,9 @@ use core::cmp::{Ordering, Reverse};
 use crate::IntoOwned;
 
 fn reverse_into_owned<T: IntoOwned>(reverse: Reverse<T>) -> Reverse<T::Owned> {
-    Reverse(reverse.0.into_owned())
+    let Reverse(value) = reverse;
+
+    Reverse(value.into_owned())
 }
 
 impl<T: IntoOwned> IntoOwned for Reverse<T> {

@@ -1,11 +1,14 @@
-#[cfg(not(any(feature = "std", feature = "alloc")))]
-compile_error!("expected either `std` or `alloc` to be enabled");
-
-#[cfg(feature = "std")]
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque};
-
-#[cfg(all(not(feature = "std"), feature = "alloc"))]
-use alloc::collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque};
+cfg_select! {
+    feature = "std" => {
+        use std::collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque};
+    }
+    feature = "alloc" => {
+        use alloc::collections::{BTreeMap, BTreeSet, BinaryHeap, LinkedList, VecDeque};
+    }
+    _ => {
+        compile_error!("expected either `std` or `alloc` to be enabled");
+    }
+}
 
 use crate::{IntoOwned, iterable::recollect};
 
