@@ -78,7 +78,7 @@ impl Fold for Mapper<'_> {
     fn fold_lifetime(&mut self, lifetime: Lifetime) -> Lifetime {
         let mut lifetime = lifetime;
 
-        if self.is_promoted(lifetime.by_ref()) && is_static(lifetime.by_ref()) {
+        if self.is_promoted(lifetime.by_ref()) && !is_static(lifetime.by_ref()) {
             make_static(lifetime.by_mut());
 
             self.set_mapped();
