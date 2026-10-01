@@ -90,6 +90,44 @@ impl<'i, T: IntoOwned> IntoOwned for Item<'i, T> {
 Then one can "lift" `Item<'_, T>` to `Item<'static, <T as IntoOwned>::Owned>` by calling
 the `into_owned` method.
 
+### Bounds
+
+Since `T` is replaced by `<T as IntoOwned>::Owned` in the `Owned` type, any bound declared
+on `T` is also required of `<T as IntoOwned>::Owned`. Such bounds are propagated
+automatically, so this code:
+
+```rust
+use ownership::IntoOwned;
+
+#[derive(IntoOwned)]
+pub struct Item<T: Bound> {
+    pub value: T,
+}
+```
+
+Will generate the following implementation:
+
+```rust
+impl<T: Bound> IntoOwned for Item<T>
+where
+    T: IntoOwned,
+    <T as IntoOwned>::Owned: Bound,
+{
+    type Owned = Item<<T as IntoOwned>::Owned>;
+
+    fn into_owned(self) -> Self::Owned {
+        Self::Owned {
+            value: IntoOwned::into_owned(self.value),
+        }
+    }
+}
+```
+
+Bounds written in `where` clauses are propagated in the same way. Note that associated types
+written in shorthand form, like `T::Item`, can not be propagated, as the trait defining them
+is unknown to the derive macro; the fully qualified `<T as Trait>::Item` form is propagated
+as expected.
+
 ## Documentation
 
 You can find the documentation [here][Documentation].

@@ -13,6 +13,7 @@ mod expand;
 mod find;
 mod index;
 mod lifetimes;
+mod map;
 mod names;
 mod parameters;
 

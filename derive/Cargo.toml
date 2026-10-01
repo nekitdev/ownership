@@ -32,6 +32,7 @@ features = [
     "parsing",
     "printing",
     "visit",
+    "fold",
     "proc-macro",
     "clone-impls",
 ]
