@@ -93,8 +93,8 @@ the `into_owned` method.
 ### Bounds
 
 Since `T` is replaced by `<T as IntoOwned>::Owned` in the `Owned` type, any bound declared
-on `T` is also required of `<T as IntoOwned>::Owned`. Such bounds are propagated
-automatically, so this code:
+on `T` is also required to be satisfied by `<T as IntoOwned>::Owned`.
+Such bounds are propagated automatically, so this code:
 
 ```rust
 use ownership::IntoOwned;
@@ -123,10 +123,13 @@ where
 }
 ```
 
-Bounds written in `where` clauses are propagated in the same way. Note that associated types
-written in shorthand form, like `T::Item`, can not be propagated, as the trait defining them
-is unknown to the derive macro; the fully qualified `<T as Trait>::Item` form is propagated
-as expected.
+Bounds written in `where` clauses are propagated in the same way.
+
+#### Note
+
+Associated types written in shorthand form, such as `T::Associated`, can not be propagated,
+as the trait defining them is unknown to the derive macro; fully qualified
+`<T as Trait>::Associated` form is propagated as expected, though.
 
 ## Documentation
 
