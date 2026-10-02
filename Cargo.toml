@@ -45,7 +45,7 @@ version = "0.4.0"
 optional = true
 
 [features]
-default = ["std", "derive"] # TODO: remove "derive"
+default = ["std"]
 derive = ["dep:ownership-derive"]
 std = []
 alloc = []
