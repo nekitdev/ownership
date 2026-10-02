@@ -2,6 +2,47 @@
 
 <!-- changelogging: start -->
 
+## [0.4.0](https://github.com/nekitdev/ownership/tree/v0.4.0) (2026-10-02)
+
+### Features
+
+- Added bound propagation to `#[derive(IntoOwned)]`.
+
+  For instance:
+
+  ```rust
+  #[derive(IntoOwned)]
+  struct Wrapped<T: Bound> {
+      pub value: T,
+  }
+  ```
+
+  Will generate the following implementation:
+
+  ```rust
+  impl<T: Bound> IntoOwned for Wrapped<T>
+  where
+      T: IntoOwned,
+      <T as IntoOwned>::Owned: Bound,
+  {
+      type Owned = Wrapped<<T as IntoOwned>::Owned>;
+
+      fn into_owned(self) -> Self::Owned {
+          Self::Owned {
+              value: IntoOwned::into_owned(self.value),
+          }
+      }
+  }
+  ```
+
+### Changes
+
+- Improved lifetime dependency resolution and promotion.
+
+### Fixes
+
+- Fixed several regressions in expansion.
+
 ## [0.3.0](https://github.com/nekitdev/ownership/tree/v0.3.0) (2025-11-17)
 
 ### Features
