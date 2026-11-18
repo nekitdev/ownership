@@ -59,6 +59,10 @@ impl<'h, 'c, T: IntoOwned> IntoOwned for Config<'h, 'c, T> {
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+use core::alloc::Allocator;
+
+use trait_aliases::trait_aliases;
+
 /// Obtaining ownership.
 ///
 /// This trait provides the [`into_owned`] method that consumes the value
@@ -80,8 +84,38 @@ pub trait IntoOwned {
     fn into_owned(self) -> Self::Owned;
 }
 
+trait_aliases! {
+    /// Represents allocators that can be cloned.
+    #[trait_alias(A, doc = "Implemented for any [`Allocator`] that is also [`Clone`].")]
+    pub trait AllocatorClone = Allocator + Clone;
+
+    /// Represents values already *settled* in `B`.
+    pub trait Settled<B: AllocatorClone> = IntoOwnedIn<B, OwnedIn = Self> + IntoOwned<Owned = Self>;
+}
+
+/// Obtaining ownership in `B`.
+///
+/// This trait provides the [`into_owned_in`] method that consumes the value,
+/// and converts it into the associated [`OwnedIn`] type, provided the allocator.
+///
+/// [`into_owned_in`]: Self::into_owned_in
+/// [`OwnedIn`]: Self::OwnedIn
+pub trait IntoOwnedIn<B: AllocatorClone>: IntoOwned {
+    /// The owned type produced by [`into_owned_in`], settled in `B`.
+    ///
+    /// This type enforces *idempotence* through its bound.
+    ///
+    /// [`into_owned_in`]: Self::into_owned_in
+    type OwnedIn: Settled<B>;
+
+    /// Consumes [`Self`] and converts it into the associated [`OwnedIn`] type, settled in `B`.
+    ///
+    /// [`OwnedIn`]: Self::OwnedIn
+    fn into_owned_in(self, allocator: B) -> Self::OwnedIn;
+}
+
 #[cfg(feature = "derive")]
-pub use ownership_derive::IntoOwned;
+use ownership_derive::IntoOwned;
 
 pub mod iterable;
 

@@ -23,6 +23,9 @@ license.workspace = true
 keywords = ["ownership", "owned"]
 categories = ["rust-patterns", "no-std", "no-std::no-alloc"]
 
+[dependencies.trait-aliases]
+workspace = true
+
 [workspace.dependencies.proc-macro2]
 version = "1.0.107"
 default-features = false
